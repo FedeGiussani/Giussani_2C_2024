@@ -80,7 +80,7 @@ void app_main(void){
 	LedsInit();
 
 	my_leds.mode = TOGGLE;
-	my_leds.n_led = LED_2;
+	my_leds.n_led = LED_3;
 	my_leds.n_ciclos = 10;
 	my_leds.periodo = 5;
 
