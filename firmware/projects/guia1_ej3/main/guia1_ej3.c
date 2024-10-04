@@ -1,11 +1,7 @@
-/*! @mainpage Template
+/*! @mainpage Guia 1 Ejercicio 5
  *
  * @section genDesc General Description
- *
- * This section describes how the program works.
- *
- * <a href="https://drive.google.com/...">Operation Example</a>
- *
+ * 
  * @section hardConn Hardware Connection
  *
  * |    Peripheral  |   ESP32   	|
@@ -17,9 +13,9 @@
  *
  * |   Date	    | Description                                    |
  * |:----------:|:-----------------------------------------------|
- * | 12/09/2023 | Document creation		                         |
+ * | 16/08/2024 | Document creation		                         |
  *
- * @author 
+ * @author Federico Giussani (federico.giussani@ingenieria.uner.edu.ar)
  *
  */
 

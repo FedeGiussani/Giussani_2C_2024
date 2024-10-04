@@ -1,16 +1,21 @@
-/*! @mainpage Blinking switch
+/*! @mainpage Guia 1 Ejercicio 5
  *
- * \section genDesc General Description
+ * @section genDesc General Description
+ * 
+ * @section hardConn Hardware Connection
  *
- * This example makes LED_1 and LED_2 blink if SWITCH_1 or SWITCH_2 are pressed.
+ * |    Peripheral  |   ESP32   	|
+ * |:--------------:|:--------------|
+ * | 	PIN_X	 	| 	GPIO_X		|
+ *
  *
  * @section changelog Changelog
  *
  * |   Date	    | Description                                    |
  * |:----------:|:-----------------------------------------------|
- * | 12/09/2023 | Document creation		                         |
+ * | 16/08/2024 | Document creation		                         |
  *
- * @author Albano Peñalva (albano.penalva@uner.edu.ar)
+ * @author Federico Giussani (federico.giussani@ingenieria.uner.edu.ar)
  *
  */
 
