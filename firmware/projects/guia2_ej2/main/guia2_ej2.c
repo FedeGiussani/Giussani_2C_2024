@@ -120,7 +120,7 @@ void medirTask()
 
 /**
  * @fn void mostrarTask()
- * @brief Tarea para mostrar la distancia en el display y controlar los LEDs.
+ * @brief Funcion para mostrar la distancia en el display y controlar los LEDs.
  * 
  * La tarea se ejecuta tras recibir una notificación (mediante `ulTaskNotifyTake`), 
  * y cuando el sistema está encendido (`on`), enciende o apaga los LEDs en función de la distancia medida 

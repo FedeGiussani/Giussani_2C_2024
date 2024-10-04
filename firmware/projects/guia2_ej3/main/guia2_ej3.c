@@ -2,11 +2,9 @@
  *
  * \section genDesc General Description
  * 
- * @section hardConn Hardware Connection
- *
- * |    Peripheral  |   ESP32   	|
- * |:--------------:|:--------------|
- * | 	PIN_X	 	| 	GPIO_X		|
+ * Aplicación que mide distancias utilizando un sensor ultrasónico, muestra los resultados en un display LCD, 
+ * y controla un conjunto de LEDs basándose en las mediciones obtenidas. El sistema también responde a entradas 
+ * de usuario a través de teclas para encender/apagar el dispositivo y mantener la última medición en pantalla.
  * 
  * @section changelog Changelog
  *
@@ -31,18 +29,41 @@
 #include "timer_mcu.h"
 #include "uart_mcu.h"
 /*==================[macros and definitions]=================================*/
+/**
+ * @def REFRESCO_MEDICION
+ * @brief Intervalo de refresco para la tarea de medición de distancia (en ms).
+ */
 #define REFRESCO_MEDICION 1000000
 
+/**
+ * @def REFRESCO_DISPLAY
+ * @brief Intervalo de refresco para la tarea de actualización del display (en ms).
+ */
 #define REFRESCO_DISPLAY 100000
 /*==================[internal data definition]===============================*/
+/**
+ * @brief Handle para la tarea de medición de distancia.
+ */
 TaskHandle_t Medir_task_handle = NULL;
 
+/**
+ * @brief Handle para la tarea de mostrar la distancia y controlar LEDs.
+ */
 TaskHandle_t Mostrar_task_handle = NULL;
 
+/**
+ * @brief Variable para almacenar la distancia medida por el sensor ultrasónico (en cm).
+ */
 uint16_t distancia = 0;
 
+/**
+ * @brief Estado que indica si el sistema está en modo "hold" (mantiene la distancia en pantalla).
+ */
 bool hold;
 
+/**
+ * @brief Estado del sistema, encendido o apagado.
+ */
 bool on;
 /*==================[internal functions declaration]=========================*/
 void escribirDistanciaEnPc()
@@ -52,16 +73,45 @@ void escribirDistanciaEnPc()
     UartSendString(UART_PC, " cm\r\n");
 }
 
+/**
+ * @fn void FuncTimerMedir(void *param)
+ * @brief Función llamada por un temporizador para notificar a la tarea de medición de distancia.
+ * 
+ * Envía una notificación a la tarea encargada de realizar la medición de distancia para que se ejecute.
+ * 
+ * @param param Parámetro no utilizado.
+ * @return 
+ */
 void FuncTimerMedir(void *param)
 {
     vTaskNotifyGiveFromISR(Medir_task_handle, pdFALSE); /* Envía una notificación a la tarea asociada a medir*/
 }
 
+/**
+ * @fn void FuncTimerMostrar(void *param)
+ * @brief Función llamada por un temporizador para notificar a la tarea de mostrar la distancia y controlar LEDs.
+ * 
+ * Envía una notificación a la tarea encargada de mostrar la distancia y controlar los LEDs.
+ * 
+ * @param param Parámetro no utilizado.
+ * @return 
+ */
 void FuncTimerMostrar(void *param)
 {
     vTaskNotifyGiveFromISR(Mostrar_task_handle, pdFALSE); /* Envía una notificación a la tarea asociada al mostrar */
 }
 
+/**
+ * @fn void medirTask()
+ * @brief Tarea para medir la distancia utilizando el sensor ultrasónico.
+ * 
+ * La tarea se ejecuta tras recibir una notificación (mediante `ulTaskNotifyTake`), 
+ * y cuando el sistema está encendido (`on`), mide la distancia con el sensor ultrasónico.
+ * El resultado se almacena en la variable `distancia`.
+ * 
+ * @note La tarea espera indefinidamente hasta recibir la notificación para ejecutarse.
+ * @return 
+ */
 void medirTask()
 {
     while (true)
@@ -74,6 +124,22 @@ void medirTask()
     }
 }
 
+/**
+ * @fn void mostrarTask()
+ * @brief Funcion para mostrar la distancia en el display, controlar los LEDs y enviar la distancia al PC.
+ * 
+ * La tarea se ejecuta tras recibir una notificación (mediante `ulTaskNotifyTake`), 
+ * y cuando el sistema está encendido (`on`), enciende o apaga los LEDs en función de la distancia medida, 
+ * actualiza la pantalla LCD, y envía la distancia medida al PC a través de la UART.
+ * 
+ * - Distancia < 10 cm: Apaga todos los LEDs.
+ * - Distancia entre 10 y 20 cm: Enciende solo LED_1.
+ * - Distancia entre 20 y 30 cm: Enciende LED_1 y LED_2.
+ * - Distancia > 30 cm: Enciende todos los LEDs.
+ * 
+ * @note La tarea espera indefinidamente hasta recibir la notificación para ejecutarse.
+ * @return 
+ */
 void mostrarTask()
 {
     while (true)
@@ -120,16 +186,46 @@ void mostrarTask()
     }
 }
 
+/**
+ * @fn void TeclaOn()
+ * @brief Función que alterna el estado de encendido/apagado del sistema.
+ * 
+ * Esta función es llamada cuando el usuario presiona el botón para encender o apagar el sistema.
+ * @return
+ */
 void TeclaOn()
 {
     on = !on;
 }
 
+/**
+ * @fn void TeclaHold()
+ * @brief Función que alterna el modo "hold" (mantener la distancia en pantalla) del sistema.
+ * 
+ * Esta función es llamada cuando el sistema está encendido (`on`) y el usuario presiona el botón para activar 
+ * o desactivar el modo "hold".
+ * @return 
+ */
 void TeclaHold()
 {
-    on = !on;
+    if (on)
+    {
+        hold = !hold;
+    }
 }
 
+/**
+ * @fn void TeclasOnHold()
+ * @brief Función que controla el sistema mediante comandos enviados por UART desde el PC.
+ * 
+ * Esta función lee un byte enviado por el PC a través de la UART y cambia el estado del sistema:
+ * 
+ * - 'O': Alterna el estado de encendido/apagado (`on`).
+ * - 'H': Alterna el estado del modo "hold".
+ * 
+ * @note Los comandos son enviados a través de la UART por el PC.
+ * @return 
+ */
 void TeclasOnHold()
 {
     uint8_t tecla;
