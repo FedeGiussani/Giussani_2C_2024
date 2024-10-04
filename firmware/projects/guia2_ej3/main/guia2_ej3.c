@@ -66,6 +66,12 @@ bool hold;
  */
 bool on;
 /*==================[internal functions declaration]=========================*/
+/**
+ * @brief Envía la distancia medida al PC a través de la UART.
+ * 
+ * La distancia medida se convierte a una cadena de texto y se envía por la UART, 
+ * seguida de la unidad "cm" y una nueva línea para facilitar su visualización en el terminal.
+ */
 void escribirDistanciaEnPc()
 {
     UartSendString(UART_PC, "distancia ");

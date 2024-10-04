@@ -1,14 +1,10 @@
-/*! @mainpage 
+/*! @mainpage Conversor Analogico-Digital
  *
  * @section genDesc General Description
  *
- *
- * @section hardConn Hardware Connection
- *
- * |    Peripheral  |   ESP32   	|
- * |:--------------:|:--------------|
- * | 	PIN_X	 	| 	GPIO_X		|
- *
+ * Sistema que convierte una señal de analógica a digital e 
+ * implementa un ejemplo generando una señal analógica a partir de una digital.
+ * 
  * @section changelog Changelog
  *
  * |   Date	    | Description         |
@@ -34,14 +30,40 @@
 #include "uart_mcu.h"
 #include "analog_io_mcu.h"
 /*==================[macros and definitions]=================================*/
+/**
+ * @def TIEMPO_CONVERSION_AD 
+ * @brief Periodo de conversión del ADC en milisegundos
+*/
 #define TIEMPO_CONVERSION_AD 2000
+
+/**
+ * @def TIEMPO_CONVERSION_DA 
+ * @brief Periodo de conversión del DAC en milisegundos
+*/
 #define TIEMPO_CONVERSION_DA 4000
+
+/**
+ * @def BUFFER_SIZE 
+ * @brief Tamaño del vector que contiene los datos de un ECG
+*/
 #define BUFFER_SIZE 256
 /*==================[internal data definition]===============================*/
+/** 
+ * @def ConversorAD_task_handle 
+ * @brief Manejador de la tarea de conversión ADC
+*/
 TaskHandle_t ConversorAD_task_handle = NULL;
 
+/** 
+ * @def ConversorDA_task_handle 
+ * @brief Manejador de la tarea de conversión DAC
+*/
 TaskHandle_t ConversorDA_task_handle = NULL;
 
+/** 
+ * @def ValorAnalogico 
+ * @brief variable de tipo entero sin signo que almacenará el valor analógico leído
+*/
 uint16_t valorAnalogico = 0;
 
 /*const char ecg[BUFFER_SIZE] = {
@@ -64,6 +86,10 @@ uint16_t valorAnalogico = 0;
     74, 67, 71, 78, 72, 67, 73, 81, 77, 71, 75, 84, 79, 77, 77, 76, 76,
 };*/
 
+/** 
+ * @def ecg 
+ * @brief Buffer con datos simulados de ECG
+*/
 const char ecg[BUFFER_SIZE] = {
 17,17,17,17,17,17,17,17,17,17,17,18,18,18,17,17,17,17,17,17,17,18,18,18,18,18,18,18,17,17,16,16,16,16,17,17,18,18,18,17,17,17,17,
 18,18,19,21,22,24,25,26,27,28,29,31,32,33,34,34,35,37,38,37,34,29,24,19,15,14,15,16,17,17,17,16,15,14,13,13,13,13,13,13,13,12,12,
@@ -73,13 +99,29 @@ const char ecg[BUFFER_SIZE] = {
 24,24,24,24,24,24,24,24,23,23,22,22,21,21,21,20,20,20,20,20,19,19,18,18,18,19,19,19,19,18,17,17,18,18,18,18,18,18,18,18,17,17,17,17,
 17,17,17
 }; // ecg alternativo
+
 /*==================[internal functions declaration]=========================*/
+/**
+ * @fn void escribirValorEnPc()
+ * @brief Envía el valor convertido por el ADC al PC a través de UART.
+ * 
+ * Esta función convierte el valor leído del ADC en una cadena de texto y lo envía a través de la UART.
+ * @return
+ */
 void escribirValorEnPc()
 {
     UartSendString(UART_PC, (char *)UartItoa(valorAnalogico, 10));
     UartSendString(UART_PC, "\r");
 }
 
+/**
+ * @fn void AD_conversor_task()
+ * @brief Tarea de conversión ADC.
+ * 
+ * Esta tarea se ejecuta cuando recibe una notificación, lee el valor del canal de entrada analógica 
+ * y lo envía al PC a través de la UART.
+ * @return 
+ */
 void AD_conversor_task()
 {
     while (true)
@@ -90,6 +132,14 @@ void AD_conversor_task()
     }
 }
 
+/**
+ * @fn void DA_conversor_task()
+ * @brief Tarea de conversión DAC.
+ * 
+ * Esta tarea se ejecuta cuando recibe una notificación, escribe el siguiente valor del buffer de ECG 
+ * en la salida analógica y avanza en el índice del buffer.
+ * @return 
+ */
 void DA_conversor_task()
 {
     uint8_t i = 0;
@@ -106,15 +156,32 @@ void DA_conversor_task()
     }
 }
 
+/**
+ * @fn void FuncTimerConversionDA()
+ * @brief Función de temporizador para notificar la tarea de conversión DAC.
+ * 
+ * Esta función es llamada por un temporizador y notifica a la tarea de conversión DAC (`DA_conversor_task`) 
+ * para que se ejecute.
+ * @return 
+ */
 void FuncTimerConversionDA()
 {
     vTaskNotifyGiveFromISR(ConversorDA_task_handle, pdFALSE);
 }
 
+/**
+ * @fn void FuncTimerConversionAD()
+ * @brief Función de temporizador para notificar la tarea de conversión ADC.
+ * 
+ * Esta función es llamada por un temporizador y notifica a la tarea de conversión ADC (`AD_conversor_task`) 
+ * para que se ejecute.
+ * @return
+ */
 void FuncTimerConversionAD()
 {
     vTaskNotifyGiveFromISR(ConversorAD_task_handle, pdFALSE);
 }
+
 /*==================[external functions definition]==========================*/
 void app_main(void)
 {
