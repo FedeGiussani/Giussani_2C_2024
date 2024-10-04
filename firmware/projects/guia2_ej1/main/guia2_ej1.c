@@ -2,11 +2,9 @@
  *
  * \section genDesc General Description
  * 
- * @section hardConn Hardware Connection
- *
- * |    Peripheral  |   ESP32   	|
- * |:--------------:|:--------------|
- * | 	PIN_X	 	| 	GPIO_X		|
+ * Aplicación que mide distancias utilizando un sensor ultrasónico, muestra los resultados en un display LCD, 
+ * y controla un conjunto de LEDs basándose en las mediciones obtenidas. El sistema también responde a entradas 
+ * de usuario a través de teclas para encender/apagar el dispositivo y mantener la última medición en pantalla.
  * 
  * @section changelog Changelog
  *
@@ -28,21 +26,55 @@
 #include "gpio_mcu.h"
 #include "lcditse0803.h"
 #include "switch.h"
+
 /*==================[macros and definitions]=================================*/
+/**
+ * @def REFRESCO_TECLAS
+ * @brief Intervalo de refresco para la tarea de lectura de teclas (en ms).
+ */
 #define REFRESCO_TECLAS 50
 
+/**
+ * @def REFRESCO_MEDICION
+ * @brief Intervalo de refresco para la tarea de medición de distancia (en ms).
+ */
 #define REFRESCO_MEDICION 1000
 
+/**
+ * @def REFRESCO_DISPLAY
+ * @brief Intervalo de refresco para la tarea de actualización del display (en ms).
+ */
 #define REFRESCO_DISPLAY 100
+
 /*==================[internal data definition]===============================*/
+/**
+ * @brief Variable para almacenar la distancia medida por el sensor ultrasónico (en cm).
+ */
 uint16_t distancia = 0;
 
+/**
+ * @brief Estado que indica si el sistema está en modo "hold" (mantiene la distancia en pantalla).
+ */
 bool hold;
 
+/**
+ * @brief Estado del sistema, encendido o apagado.
+ */
 bool on;
+
 /*==================[internal functions declaration]=========================*/
+/**
+ * @fn void medirTask()
+ * @brief Función para medir la distancia utilizando el sensor ultrasónico.
+ * 
+ * Esta función se ejecuta en un bucle continuo y lee la distancia cuando el sistema está encendido.
+ * El valor leído se almacena en la variable `distancia`.
+ * @param
+ * @note La medición se realiza cada `REFRESCO_MEDICION` ms.
+ * @return
+ */
 void medirTask()
-{ // en esta tarea se mide las distancias por el sensor y se modifica el estado de los leds dependiendo lo que se este midiendo
+{
     while (true)
     {
         if (on)
@@ -53,13 +85,27 @@ void medirTask()
     }
 }
 
+/**
+ * @fn void mostrarTask()
+ * @brief Funcion para mostrar la distancia en un display LCD y controlar los LEDs según la distancia.
+ * 
+ * Dependiendo de la distancia medida, enciende los LEDs correspondientes y actualiza el display LCD.
+ * 
+ * - Si la distancia es menor a 10 cm, apaga todos los LEDs.
+ * - Si la distancia está entre 10 y 20 cm, enciende el LED_1.
+ * - Si la distancia está entre 20 y 30 cm, enciende LED_1 y LED_2.
+ * - Si la distancia es mayor a 30 cm, enciende todos los LEDs.
+ * 
+ * @param
+ * @note La pantalla se actualiza cada `REFRESCO_DISPLAY` ms, a menos que el sistema esté en modo "hold".
+ * @return 
+ */
 void mostrarTask()
 {
     while (true)
     {
         if (on)
         {
-            // aca se realizan las tareas de encender leds dependiendo la distancia y encender el display
             if (distancia < 10)
             {
                 LedsOffAll();
@@ -97,6 +143,19 @@ void mostrarTask()
     }
 }
 
+/**
+ * @fn void teclasTask()
+ * @brief Tarea para leer las teclas y actualizar el estado del sistema.
+ * 
+ * Lee las teclas y cambia el estado de `on` (encendido/apagado) o `hold` (mantener pantalla) según la tecla presionada:
+ * 
+ * - `SWITCH_1`: Alterna el estado de `on`.
+ * - `SWITCH_2`: Alterna el estado de `hold`.
+ * 
+ * @param
+ * @note Las teclas se leen cada `REFRESCO_TECLAS` ms.
+ * @return
+ */
 void teclasTask()
 {
     uint8_t teclas;
@@ -115,6 +174,7 @@ void teclasTask()
         vTaskDelay(REFRESCO_TECLAS / portTICK_PERIOD_MS);
     }
 } 
+
 /*==================[external functions definition]==========================*/
 void app_main(void)
 {
