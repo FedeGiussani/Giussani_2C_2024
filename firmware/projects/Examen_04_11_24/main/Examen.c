@@ -1,27 +1,29 @@
-/*! @mainpage Template
+/*! @mainpage Alerta Para Ciclistas
  *
  * @section genDesc General Description
  *
- * This section describes how the program works.
- *
- * <a href="https://drive.google.com/...">Operation Example</a>
- *
+ * Sistema que implementa una aplicacion para un dispositivo que se conecta en la bicicleta y el casco y realiza tareas 
+ * asociadas a la seguridad del ciclista.
+ * 
  * @section hardConn Hardware Connection
  *
- * |    Peripheral  |   ESP32   	|
- * |:--------------:|:--------------|
- * | 	PIN_X	 	| 	GPIO_X		|
- *
- *
+ * |    Peripheral  |   ESP32   				|
+ * |:--------------:|:--------------------------|
+ * | 	HcSr04	 	| 	GPIO_3 and GPIO_2		|
+ * | 	buzzer	 	| 	GPIO_9					|
+ * | 	acelerometro| 	GPIO18 and GPIO19		|
+ * 
+ * 
  * @section changelog Changelog
  *
- * |   Date	    | Description                                    |
- * |:----------:|:-----------------------------------------------|
- * | 12/09/2023 | Document creation		                         |
+ * |   Date	    | Description         |
+ * |:----------:|:--------------------|
+ * | 04/11/2024 | Document creation   |
  *
- * @author Albano Peñalva (albano.penalva@uner.edu.ar)
+ * @author Federico Giussani (federico.giussani@ingenieria.uner.edu.ar)
  *
  */
+
 
 /*==================[inclusions]=============================================*/
 #include <stdio.h>
@@ -36,13 +38,33 @@
 #include "uart_mcu.h"
 #include "analog_io_mcu.h"
 /*==================[macros and definitions]=================================*/
-#define REFRESCO_MEDICION 500000 //en us 
+/**
+ * @def REFRESCO_MEDICION 
+ * @brief Intervalo de refresco para la tarea de medición de distancia (en us).
+*/
+#define REFRESCO_MEDICION 500000
+
+/**
+ * @def TIEMPO_CONVERSION_AD 
+ * @brief Periodo de conversión del ADC (en us)
+*/
 #define TIEMPO_CONVERSION_AD 5000 //el sensor arroja datos cada 10 ms, le pongo por lo menos el doble de frecuencia, mide cada 5000 us
 /*==================[internal data definition]===============================*/
+/**
+ * @brief Variable para almacenar la distancia medida por el sensor ultrasónico (en cm).
+ */
 uint16_t distancia = 0;
 
+/**
+ * @def Medir_task_handle
+ * @brief Handle para la tarea de medición de distancia.
+ */
 TaskHandle_t Medir_task_handle = NULL;
 
+/** 
+ * @def ConversorAD_task_handle 
+ * @brief Manejador de la tarea de conversión ADC
+*/
 TaskHandle_t ConversorAD_task_handle = NULL;
 
 uint16_t valorAnalogico_1 = 0;
@@ -51,12 +73,28 @@ uint16_t valorAnalogico_2 = 0;
 
 uint16_t valorAnalogico_3 = 0;
 /*==================[internal functions declaration]=========================*/
-//Parte de medicion y operar con leds
+/**
+ * @fn void FuncTimerMedir(void *param)
+ * @brief Función llamada por un temporizador para notificar a la tarea de medición de distancia.
+ * 
+ * Envía una notificación a la tarea encargada de realizar la medición de distancia para que se ejecute.
+ * 
+ * @param param Parámetro no utilizado.
+ * @return 
+ */
 void FuncTimerMedir(void *param)
 {
     vTaskNotifyGiveFromISR(Medir_task_handle, pdFALSE); /* Envía una notificación a la tarea asociada a medir*/
 }
 
+/**
+ * @fn void OperarConDistancia()
+ * @brief Funcion para mostrar la distancia en el display, controlar los LEDs y enviar la distancia al PC.
+ * 
+ * 
+ * @note La tarea espera indefinidamente hasta recibir la notificación para ejecutarse.
+ * @return 
+ */
 void OperarConDistancia()
 {
     while (true)
@@ -89,7 +127,12 @@ void OperarConDistancia()
     }
 }
 
-//Parte de hacer sonar el buffer
+/**
+ * @fn void alarmaPrecaucion()
+ * @brief Funcion que hace encender y apagar el GPIO9 cada 1 seg
+ * 
+ * @return 
+ */
 void alarmaPrecaucion(){
 	while (true)
 	{
@@ -98,6 +141,12 @@ void alarmaPrecaucion(){
 	}
 }
 
+/**
+ * @fn void alarmaPeligro()
+ * @brief Funcion que hace encender y apagar el GPIO9 cada 0,5 seg
+ * 
+ * @return 
+ */
 void alarmaPeligro(){
 	while(true){
 		GPIOToggle(GPIO_9);
@@ -105,7 +154,16 @@ void alarmaPeligro(){
 	}
 }
 
-//parte del mensaje por UART
+/**
+ * @fn escribirMensajeUART(uint16_t alerta)
+ * @brief Funcion que envia un mensaje mediante una UART
+ * 
+ * @param alerta se usa para elegir el tipo de mensaje a emitir
+ * 0: "Precaución, vehículo cerca."
+ * 1: "Peligro, vehículo cerca."
+ * 2: "Caida detectada.")
+ * @return 
+ */
 void escribirMensajeUART(uint16_t alerta)
 {
 	if (alerta == 0)//precaucion
@@ -122,12 +180,26 @@ void escribirMensajeUART(uint16_t alerta)
 	}
 }
 
-//parte de la caida
+/**
+ * @fn void FuncTimerConversionAD()
+ * @brief Función de temporizador para notificar la tarea de conversión ADC.
+ * 
+ * Esta función es llamada por un temporizador y notifica a la tarea de conversión ADC (`AD_conversor_task`) 
+ * para que se ejecute.
+ * @return
+ */
 void FuncTimerConversionAD()
 {
     vTaskNotifyGiveFromISR(ConversorAD_task_handle, pdFALSE);
 }
 
+/**
+ * @fn void AD_conversor_task()
+ * @brief Tarea de conversión ADC.
+ * 
+ * Esta funcion lee los valores analogicos convertidos a digital y opera con ellos.
+ * @return 
+ */
 void AD_conversor_task()
 {
     while (true)
