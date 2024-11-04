@@ -194,7 +194,7 @@ void app_main(void)
         };
     UartInit(&ControlarUart);
 
-	/* Inicialización de timer de conversor AD */
+	/* Inicialización de timer de conversor DA */
     timer_config_t timer_conversionDA = {
         .timer = TIMER_A,
         .period = TIEMPO_CONVERSION_DA,
@@ -202,6 +202,7 @@ void app_main(void)
         .param_p = NULL};
     TimerInit(&timer_conversionDA);
 
+    /* Inicialización de timer de conversor AD */
     timer_config_t timer_conversionAD = {
         .timer = TIMER_B,
         .period = TIEMPO_CONVERSION_AD,

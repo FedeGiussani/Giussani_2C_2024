@@ -85,43 +85,6 @@ void BCDtoGPIO(uint8_t digit, gpioConf_t *gpio_config);
  */
 void displayNumberOnLCD(uint32_t data, gpioConf_t *data_gpio_config, gpioConf_t *digit_gpio_config);
 
-/**
- * @fn void GPIOInit(gpio_t pin, io_t dir)
- * @brief Inicializa un pin GPIO con una dirección específica.
- *
- * @param pin Pin GPIO a inicializar.
- * @param dir Dirección del GPIO: '0' IN; '1' OUT.
- * @return
- */
-void GPIOInit(gpio_t pin, io_t dir);
-
-/**
- * @fn void GPIOOn(gpio_t pin)
- * @brief Enciende un pin GPIO.
- *
- * @param pin Pin GPIO a encender.
- */
-void GPIOOn(gpio_t pin);
-
-/**
- * @fn void GPIOOff(gpio_t pin)
- * @brief Apaga un pin GPIO.
- *
- * @param pin Pin GPIO a apagar.
- * @return 
- */
-void GPIOOff(gpio_t pin);
-
-/**
- * @fn void GPIOstate(gpio_t pin, uint8_t state)
- * @brief Configura el estado de un pin GPIO.
- *
- * @param pin Pin GPIO a configurar.
- * @param state Estado a asignar al pin: '0' para apagar; '1' para encender.
- * @return
- */
-void GPIOstate(gpio_t pin, uint8_t state);
-
 /*==================[external functions definition]==========================*/
 int8_t convertToBcdArray(uint32_t data, uint8_t digits, uint8_t *bcd_number)
 {
@@ -162,7 +125,7 @@ void BCDtoGPIO(uint8_t digit, gpioConf_t *gpio_config) {
 
 // Función para mostrar un número en el display LCD
 void displayNumberOnLCD(uint32_t data, gpioConf_t *data_gpio_config, gpioConf_t *digit_gpio_config) {
-    uint8_t bcd_array[LCD_DIGITS];
+    uint8_t bcd_array[LCD_DIGITS]; //arreglo donde se va a guardar el BCD
     
     // Convertir el número a formato BCD
     convertToBcdArray(data, LCD_DIGITS, bcd_array);
@@ -197,7 +160,7 @@ void app_main(void) {
         {GPIO_22, 1},
         {GPIO_23, 1}
     };
-    
+    //configura el puerto donde se va a mostrar el digito 
     gpioConf_t digit_gpio_config[LCD_DIGITS] = {
         {GPIO_19, 1}, // Dígito 1
         {GPIO_18, 1}, // Dígito 2

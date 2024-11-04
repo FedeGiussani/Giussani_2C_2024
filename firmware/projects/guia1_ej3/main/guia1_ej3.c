@@ -40,8 +40,10 @@ struct leds
 	uint8_t n_ciclos;   // indica la cantidad de ciclos de ncendido/apagado
 	uint16_t periodo;    // indica el tiempo de cada ciclo
 } my_leds;
+
 /*==================[internal functions declaration]=========================*/
 void ControlLeds(struct leds* puntero_led);
+
 /*==================[external functions definition]==========================*/
 void ControlLeds(struct leds* puntero_led)
 {
